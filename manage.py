@@ -12,8 +12,6 @@ if __name__ == "__main__":
             "forget to activate a virtual environment?"
         ) from exc
 
-    if len(sys.argv) > 1 and sys.argv[1] == 'runserver' and len(sys.argv) == 2:
-        port = os.environ.get('PORT', '8000')
-        sys.argv.append('0.0.0.0:' + port)
-
-    execute_from_command_line(sys.argv)
+    # Use the PORT environment variable provided by Render
+    port = os.environ.get('PORT', '8000')
+    execute_from_command_line([sys.argv[0], 'runserver', '0.0.0.0:' + port])
