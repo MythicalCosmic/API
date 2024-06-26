@@ -30,14 +30,12 @@ def login_view(request):
 
 
 @api_view(['POST'])
-@login_required()
 def logout_view(request):
     logout(request)
     return Response({'server': 'You have successfully logged out!'}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
-@login_required()
 def allOrders(request):
     orders = Orders.objects.all()
     serializer = OrderSerializer(orders, many=True)
@@ -45,7 +43,6 @@ def allOrders(request):
 
 
 @api_view(['GET'])
-@login_required()
 def getAvailableDoctors(request, service_id):
     try:
         service = Service.objects.get(id=service_id)
@@ -58,7 +55,6 @@ def getAvailableDoctors(request, service_id):
 
 
 @api_view(['POST'])
-@login_required()
 def createOrder(request):
     serializer = OrderSerializer(data=request.data)
     if serializer.is_valid():
@@ -68,7 +64,6 @@ def createOrder(request):
 
 
 @api_view(['DELETE'])
-@login_required()
 def delete_order(request, pk):
     try:
         order = Orders.objects.get(pk=pk)
@@ -79,7 +74,6 @@ def delete_order(request, pk):
 
 
 @api_view(['PUT'])
-@login_required()
 def update_order(request, pk):
     try:
         order = Orders.objects.get(pk=pk)
@@ -94,7 +88,6 @@ def update_order(request, pk):
 
 
 @api_view(['GET'])
-@login_required()
 def getAllServices(request):
     all_data = Service.objects.all()
     serializer = ServiceSerializer(all_data, many=True)
@@ -102,7 +95,6 @@ def getAllServices(request):
 
 
 @api_view(["POST"])
-@login_required()
 def addService(request):
     serializer = ServiceSerializer(data=request.data)
     if not serializer.is_valid():
@@ -112,7 +104,6 @@ def addService(request):
 
 
 @api_view(['DELETE'])
-@login_required()
 def deleteService(request, pk):
     try:
         service = Service.objects.get(pk=pk)
@@ -123,7 +114,6 @@ def deleteService(request, pk):
 
 
 @api_view(['PUT'])
-@login_required()
 def updateService(request, pk):
     try:
         service = Service.objects.get(pk=pk)
@@ -138,7 +128,6 @@ def updateService(request, pk):
 
 
 @api_view(['GET'])
-@login_required()
 def getAllDoctors(request):
     all_data = Doctors.objects.all()
     serializer = DoctorSerializer(all_data, many=True)
@@ -146,7 +135,6 @@ def getAllDoctors(request):
 
 
 @api_view(['POST'])
-@login_required()
 def addDoctor(request):
     serializer = DoctorSerializer(data=request.data)
     if not serializer.is_valid():
@@ -156,7 +144,6 @@ def addDoctor(request):
 
 
 @api_view(['DELETE'])
-@login_required()
 def deleteDoctor(request, pk):
     try:
         doctor = Doctors.objects.get(pk=pk)
@@ -167,7 +154,6 @@ def deleteDoctor(request, pk):
 
 
 @api_view(['PUT'])
-@login_required()
 def updateDoctor(request, pk):
     try:
         doctor = Doctors.objects.get(pk=pk)
@@ -184,7 +170,6 @@ def updateDoctor(request, pk):
 
 
 @api_view(['GET'])
-@login_required
 def allCustomers(request):
     customers = Customers.objects.all()
     serialized = CustomerSerializer(customers, many=True)
@@ -192,7 +177,6 @@ def allCustomers(request):
 
 
 @api_view(['GET'])
-@login_required
 def createCustomer(request):
     serialized = CustomerSerializer(data=request.data)
     if not serialized.is_valid():
@@ -201,7 +185,6 @@ def createCustomer(request):
     return Response({'success': 'Customer created successfully'}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
-@login_required
 def updateCustomer(request, pk):
     try:
         doctor = Customers.objects.get(pk=pk)
@@ -215,7 +198,6 @@ def updateCustomer(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-@login_required
 def deleteCustomer(request, pk):
     try:
         customer = Customers.objects.get(pk=pk)
@@ -226,7 +208,6 @@ def deleteCustomer(request, pk):
 
 
 @api_view(['GET'])
-@login_required()
 def showCashBox(request):
     try:
         cashbox = Money.objects.all()
@@ -237,14 +218,12 @@ def showCashBox(request):
 
 
 @api_view(['GET'])
-@login_required()
 def getTotal(request):
     total_price = Orders.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
     return Response({'total_price': total_price}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
-@login_required()
 def inKassa(request):
     serializer = MoneySerializer(data=request.data)
     if not serializer.is_valid():
@@ -255,7 +234,6 @@ def inKassa(request):
 
 
 @api_view(['POST'])
-@login_required()
 def reset_cashbox(request):
     Money.objects.all().delete()
     Orders.objects.update(price=0)
@@ -263,7 +241,6 @@ def reset_cashbox(request):
 
 
 @api_view(['POST'])
-@login_required()
 def withdraw_money(request):
     amount = request.data.get('amount')
     comment = request.data.get('comment', '')
@@ -291,7 +268,6 @@ def withdraw_money(request):
 
 
 @api_view(['POST'])
-@login_required()
 def createUser(request):
     try:
         serializer = UsersMainSerializer(data=request.data)
@@ -303,14 +279,12 @@ def createUser(request):
         return Response({'error': 'Error occurred while creating User', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
-@login_required()
 def allUsers(request):
     users = MainUsers.objects.all()
     serialized = UsersMainSerializer(users, many=True)
     return Response(serialized.data, status=status.HTTP_200_OK)
 
 @api_view(['PUT'])
-@login_required()
 def deleteUser(request, pk):
     try:
         user = MainUsers.objects.get(pk=pk)
@@ -320,7 +294,6 @@ def deleteUser(request, pk):
     return Response({'success': 'User deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['POST'])
-@login_required()
 def updateUser(request, pk):
     try:
         user = MainUsers.objects.get(pk=pk)
@@ -334,7 +307,6 @@ def updateUser(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-@login_required()
 def list_permissions(request):
     permissions = Permission.objects.all()
     serializer = PermissionSerializer(permissions, many=True)
@@ -342,7 +314,6 @@ def list_permissions(request):
 
 
 @api_view(['GET'])
-@login_required()
 def AllCategory(request):
     categories = Category.objects.all()
     serialized = CategorySerializer(categories, many=True)
@@ -350,7 +321,6 @@ def AllCategory(request):
 
 
 @api_view(['POST'])
-@login_required()
 def createCategory(request):
     try:
         serializer = CategorySerializer(data=request.data)
@@ -364,7 +334,6 @@ def createCategory(request):
 
 
 @api_view(['PUT'])
-@login_required()
 def deleteCategory(request, pk):
     try:
         categories = Category.objects.get(pk=pk)
@@ -376,7 +345,6 @@ def deleteCategory(request, pk):
 
 
 @api_view(['POST'])
-@login_required()
 def updateCategory(request, pk):
     try:
         user = Category.objects.get(pk=pk)
