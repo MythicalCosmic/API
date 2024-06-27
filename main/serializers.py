@@ -30,17 +30,28 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class OrderSerializer(serializers.ModelSerializer):
+    customer_name = serializers.CharField(source='customer.name', read_only=True)
+    doctor_name = serializers.CharField(source='doctor.name', read_only=True)
+    service_name = serializers.CharField(source='service.name', read_only=True)
+
     class Meta:
         model = Orders
-        fields = '__all__'
+        fields = ['id', 'customer', 'customer_name', 'doctor', 'doctor_name', 'service', 'service_name']  # Include other fields from Orders model as needed
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['customer'] = CustomerSerializer(instance.customer).data
+        representation['doctor'] = DoctorSerializer(instance.doctor).data
+        representation['service'] = ServiceSerializer(instance.service).data
+        return representation
 
 
 class ServiceSerializer(serializers.ModelSerializer):
+    category_type = serializers.CharField(source='typeOf.name', read_only=True)
+
     class Meta:
         model = Service
-        fields = '__all__'
-
+        fields = ['id', 'name', 'price', 'category_type']
 
 
 
@@ -50,10 +61,19 @@ class DoctorSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class MoneySerializer(serializers.ModelSerializer):
+    customer_name = serializers.CharField(source='customer.name', read_only=True)
+    doctor_name = serializers.CharField(source='doctor.name', read_only=True)
+
     class Meta:
         model = Money
-        fields = '__all__'
+        fields = ['id', 'price', 'customer', 'customer_name', 'doctor', 'doctor_name', 'service']  # Include other fields from Money model as needed
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['customer'] = CustomerSerializer(instance.customer).data
+        representation['doctor'] = DoctorSerializer(instance.doctor).data
+        representation['service'] = ServiceSerializer(instance.service).data
+        return representation
 
 class PermissionSerializer(serializers.ModelSerializer):
     class Meta:

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Project Documentation</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1, h2, h3 {
+            color: #db4f66;
+            text-align: center;
+        }
+        code {
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="section">
+        <h1>Django Project Documentation</h1>
+
+        <div class="section">
+            <h2>URLs</h2>
+            <ul>
+                <li><code>/admin/</code>: Django admin interface</li>
+                <li><code>/accounts/login/</code>: User login endpoint</li>
+                <li><code>/orders/</code>: Endpoint for retrieving all orders (<code>allOrders</code>)</li>
+                <li><code>/orders/create/</code>: Endpoint for creating an order (<code>createOrder</code>)</li>
+                <li><code>/doctors/available/&lt;service_id&gt;/</code>: Endpoint for available doctors by service (<code>getAvailableDoctors</code>)</li>
+                <li><code>/api/orders/&lt;pk&gt;/</code>: Endpoint for deleting an order (<code>delete_order</code>)</li>
+                <li><code>/api/orders/update/&lt;pk&gt;/</code>: Endpoint for updating an order (<code>update_order</code>)</li>
+                <li><code>/api/services/create/</code>: Endpoint for adding a service (<code>addService</code>)</li>
+                <li><code>/api/services/all/</code>: Endpoint for retrieving all services (<code>getAllServices</code>)</li>
+                <li><code>/api/services/delete/&lt;pk&gt;</code>: Endpoint for deleting a service (<code>deleteService</code>)</li>
+                <li><code>/api/services/update/&lt;pk&gt;</code>: Endpoint for updating a service (<code>updateService</code>)</li>
+                <li><code>/api/doctors/create/</code>: Endpoint for adding a doctor (<code>addDoctor</code>)</li>
+                <li><code>/api/doctors/all/</code>: Endpoint for retrieving all doctors (<code>getAllDoctors</code>)</li>
+                <li><code>/api/doctors/delete/&lt;pk&gt;</code>: Endpoint for deleting a doctor (<code>deleteDoctor</code>)</li>
+                <li><code>/api/doctors/update/&lt;pk&gt;</code>: Endpoint for updating a doctor (<code>updateDoctor</code>)</li>
+                <li><code>/api/user/logout/</code>: Endpoint for user logout (<code>logout_view</code>)</li>
+                <li><code>/api/cashbox/all/</code>: Endpoint for retrieving all cashbox entries (<code>showCashBox</code>)</li>
+                <li><code>/api/cashbox/total/</code>: Endpoint for retrieving total cashbox amount (<code>getTotal</code>)</li>
+                <li><code>/api/cashbox/reset/</code>: Endpoint for resetting the cashbox (<code>reset_cashbox</code>)</li>
+                <li><code>/api/cashbox/withdrawCashbox/</code>: Endpoint for withdrawing money from cashbox (<code>withdraw_money</code>)</li>
+                <li><code>/api/create-user/</code>: Endpoint for creating a user (<code>createUser</code>)</li>
+                <li><code>/api/users/all/</code>: Endpoint for retrieving all users (<code>allUsers</code>)</li>
+                <li><code>/api/permission/list/</code>: Endpoint for listing all permissions (<code>list_permissions</code>)</li>
+                <li><code>/api/customers/list/</code>: Endpoint for retrieving all customers (<code>allCustomers</code>)</li>
+                <li><code>/api/customers/create/</code>: Endpoint for creating a customer (<code>createCustomer</code>)</li>
+                <li><code>/api/customers/update/&lt;pk&gt;</code>: Endpoint for updating a customer (<code>updateCustomer</code>)</li>
+                <li><code>/api/customers/delete/&lt;pk&gt;</code>: Endpoint for deleting a customer (<code>deleteCustomer</code>)</li>
+                <li><code>/api/users/delete/&lt;pk&gt;</code>: Endpoint for deleting a user (<code>deleteUser</code>)</li>
+                <li><code>/api/users/update/&lt;pk&gt;</code>: Endpoint for updating a user (<code>updateUser</code>)</li>
+                <li><code>/api/categories/all/</code>: Endpoint for retrieving all categories (<code>AllCategory</code>)</li>
+                <li><code>/api/categories/delete/&lt;pk&gt;</code>: Endpoint for deleting a category (<code>deleteCategory</code>)</li>
+                <li><code>/api/categories/create/</code>: Endpoint for creating a category (<code>createCategory</code>)</li>
+                <li><code>/api/categories/update/&lt;pk&gt;</code>: Endpoint for updating a category (<code>updateCategory</code>)</li>
+                <li><code>/</code>: Home endpoint (<code>home</code>)</li>
+                <!-- Add other URLs as per your urlpatterns -->
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Views</h2>
+            <ul>
+                <li><code>login_view(request)</code>: Handles user authentication</li>
+                <li><code>logout_view(request)</code>: Logs out the user</li>
+                <li><code>allOrders(request)</code>: Retrieves all orders</li>
+                <li><code>getAvailableDoctors(request, service_id)</code>: Retrieves available doctors for a service</li>
+                <li><code>createOrder(request)</code>: Creates a new order</li>
+                <li><code>delete_order(request, pk)</code>: Deletes an order</li>
+                <li><code>update_order(request, pk)</code>: Updates an order</li>
+                <li><code>addService(request)</code>: Adds a new service</li>
+                <li><code>getAllServices(request)</code>: Retrieves all services</li>
+                <li><code>deleteService(request, pk)</code>: Deletes a service</li>
+                <li><code>updateService(request, pk)</code>: Updates a service</li>
+                <li><code>addDoctor(request)</code>: Adds a new doctor</li>
+                <li><code>getAllDoctors(request)</code>: Retrieves all doctors</li>
+                <li><code>deleteDoctor(request, pk)</code>: Deletes a doctor</li>
+                <li><code>updateDoctor(request, pk)</code>: Updates a doctor</li>
+                <li><code>showCashBox(request)</code>: Retrieves all cashbox entries</li>
+                <li><code>getTotal(request)</code>: Retrieves total cashbox amount</li>
+                <li><code>reset_cashbox(request)</code>: Resets the cashbox</li>
+                <li><code>withdraw_money(request)</code>: Withdraws money from the cashbox</li>
+                <li><code>createUser(request)</code>: Creates a new user</li>
+                <li><code>allUsers(request)</code>: Retrieves all users</li>
+                <li><code>list_permissions(request)</code>: Lists all permissions</li>
+                <li><code>allCustomers(request)</code>: Retrieves all customers</li>
+                <li><code>createCustomer(request)</code>: Creates a new customer</li>
+                <li><code>updateCustomer(request, pk)</code>: Updates a customer</li>
+                <li><code>deleteCustomer(request, pk)</code>: Deletes a customer</li>
+                <li><code>deleteUser(request, pk)</code>: Deletes a user</li>
+                <li><code>updateUser(request, pk)</code>: Updates a user</li>
+                <li><code>AllCategory(request)</code>: Retrieves all categories</li>
+                <li><code>deleteCategory(request, pk)</code>: Deletes a category</li>
+                <li><code>createCategory(request)</code>: Creates a new category</li>
+                <li><code>updateCategory(request, pk)</code>: Updates a category</li>
+                <li><code>home(request)</code>: Home view</li>
+                <!-- Add descriptions for other views -->
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Models</h2>
+            <ul>
+                <li><strong>Customers</strong>: Represents customers in the system
+                    <ul>
+                        <li><code>full_name</code>: CharField, maximum length 100</li>
+                        <li><code>age</code>: IntegerField</li>
+                        <li><code>email</code>: EmailField</li>
+                    </ul>
+                </li>
+                <li><strong>Doctors</strong>: Represents doctors with their details
+                    <ul>
+                        <li><code>name</code>: CharField, maximum length 100</li>
+                        <li><code>specialization</code>: CharField, maximum length 100</li>
+                        <li><code>available</code>: BooleanField, default=True</li>
+                    </ul>
+                </li>
+                <li><strong>Category</strong>: Represents service categories
+                    <ul>
+                        <li><code>name</code>: CharField, maximum length 50</li>
+                        <li><code>description</code>: TextField</li>
+                    </ul>
+                </li>
+                <li><strong>Service</strong>: Represents services offered
+                    <ul>
+                        <li><code>name</code>: CharField, maximum length 100</li>
+                        <li><code>category</code>: ForeignKey to Category</li>
+                        <li><code>price</code>: DecimalField</li>
+                    </ul>
+                </li>
+                <li><strong>Orders</strong>: Represents customer orders for services
+                    <ul>
+                        <li><code>customer</code>: ForeignKey to Customers</li>
+                        <li><code>service</code>: ForeignKey to Service</li>
+                        <li><code>order_date</code>: DateTimeField</li>
+                    </ul>
+                </li>
+                <li><strong>Money</strong>: Represents financial transactions
+                    <ul>
+                        <li><code>amount</code>: DecimalField</li>
+                        <li><code>transaction_date</code>: DateTimeField</li>
+                    </ul>
+                </li>
+                <li><strong>MainUsers</strong>: Represents main system users
+                    <ul>
+                        <li><code>username</code>: CharField, maximum length 50</li>
+                        <li><code>password</code>: CharField</li>
+                    </ul>
+                </li>
+                <li><strong>CustomGroup</strong>: Represents custom user groups with permissions
+                    <ul>
+                        <li><code>group_name</code>: CharField, maximum length 50</li>
+                        <li><code>permissions</code>: ManyToManyField to Permissions</li>
+                    </ul>
+                </li>
+                <!-- Add descriptions for other models -->
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

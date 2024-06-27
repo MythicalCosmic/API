@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 from main.views import *
-
+from docs.views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/login/', login_view, name='login'),
@@ -36,4 +36,5 @@ urlpatterns = [
     path('api/categories/delete/<int:pk>', deleteCategory, name="deleteCategory"),
     path('api/categories/create/', createCategory, name="createCategory"),
     path('api/categories/update/<int:pk>', updateCategory, name="updateCategory"),
+    path('', home, name='home')
 ]
