@@ -98,13 +98,15 @@ def getAllServices(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
+@api_view(['POST'])
 def addService(request):
     serializer = ServiceSerializer(data=request.data)
-    if not serializer.is_valid():
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    serializer.save()
-    return Response({'success': 'Service added successfully'}, status=status.HTTP_201_CREATED)
+
 
 
 @api_view(['DELETE'])

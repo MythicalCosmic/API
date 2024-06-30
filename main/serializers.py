@@ -43,18 +43,16 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class ServiceSerializer(serializers.ModelSerializer):
-    category_type = serializers.CharField(source='typeOf.name', read_only=True)
+    typeOf = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
 
     class Meta:
         model = Service
-        fields = ['id', 'name', 'price_of_service', 'category_type']
+        fields = ['name', 'typeOf', 'price_of_service']
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['price'] = instance.price_of_service
-        return representation
-
-
+    def validate_typeOf(self, value):
+        if not isinstance(value, Category):
+            raise serializers.ValidationError("typeOf must be a Category instance.")
+        return value
 
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
