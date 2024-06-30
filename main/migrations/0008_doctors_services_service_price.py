@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='service',
-            name='price',
+            name='priceprice_of_service',
             field=models.IntegerField(null=True),
         ),
     ]
