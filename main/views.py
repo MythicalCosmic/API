@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import LoginSerializer, MoneySerializer, OrderSerializer, DoctorSerializer, ServiceSerializer, CustomGroupSerializers, PermissionSerializer, CustomerSerializer, UsersMainSerializer, CategorySerializer
-from .models import Orders, Money, Service, Doctors, Customers, CustomGroup, MainUsers, Category
+from .serializers import LoginSerializer, MoneySerializer, OrderSerializer, DoctorSerializer, ServiceSerializer, CustomGroupSerializers, PermissionSerializer, CustomerSerializer, UsersMainSerializer, CategorySerializer, CashBoxLogSerializer
+from .models import Orders, Money, Service, Doctors, Customers, CustomGroup, MainUsers, Category, CashBoxLog
 from rest_framework import status
 from django.db.models import Sum, F
 from django.contrib.auth.models import Group
@@ -56,11 +56,15 @@ def getAvailableDoctors(request, service_id):
 
 @api_view(['POST'])
 def createOrder(request):
+    print("Request Data:", request.data)
     serializer = OrderSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=201)
-    return Response(serializer.errors, status=400)
+        instance = serializer.save()
+        print("Instance Saved:", instance)
+        return Response(OrderSerializer(instance).data, status=201)
+    else:
+        print("Errors:", serializer.errors)
+        return Response(serializer.errors, status=400)
 
 
 @api_view(['DELETE'])
@@ -210,17 +214,19 @@ def deleteCustomer(request, pk):
 @api_view(['GET'])
 def showCashBox(request):
     try:
-        cashbox = Money.objects.all()
-        serializer = MoneySerializer(cashbox, many=True)
+        cashbox_logs = CashBoxLog.objects.all().order_by('-timestamp')
+        serializer = CashBoxLogSerializer(cashbox_logs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 @api_view(['GET'])
 def getTotal(request):
-    total_price = Orders.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
+    total_price = Money.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
     return Response({'total_price': total_price}, status=status.HTTP_200_OK)
+
 
 
 @api_view(['POST'])
@@ -237,7 +243,9 @@ def inKassa(request):
 def reset_cashbox(request):
     Money.objects.all().delete()
     Orders.objects.update(price=0)
+    CashBoxLog.objects.create(action="reset", amount=0, comment="Cashbox reset")
     return Response({'message': 'Cashbox reset successfully', 'total_price': 0}, status=status.HTTP_200_OK)
+
 
 
 @api_view(['POST'])
@@ -247,24 +255,34 @@ def withdraw_money(request):
 
     if not amount or amount <= 0:
         return Response({'error': 'Invalid amount specified'}, status=status.HTTP_400_BAD_REQUEST)
-
-    total_money = Money.objects.aggregate(total=Sum('price'))['total'] or 0
-
+    total_money = Money.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
+    print(f"Total money available before withdrawal: {total_money}")
     if amount > total_money:
-        return Response({'error': 'Insufficient funds'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Insufficient funds in cashbox'}, status=status.HTTP_400_BAD_REQUEST)
 
     remaining_amount = amount
     while remaining_amount > 0:
         money_entry = Money.objects.first()
-        if money_entry.price > remaining_amount:
+        if money_entry is None:
+            break
+
+        if money_entry.price >= remaining_amount:
             money_entry.price -= remaining_amount
             money_entry.save()
             remaining_amount = 0
         else:
             remaining_amount -= money_entry.price
             money_entry.delete()
-    # Log.objects.create(amount=amount, comment=comment) for logs
-    return Response({'message': f'{amount} withdrawn successfully', 'remaining_balance': total_money - amount}, status=status.HTTP_200_OK)
+
+    CashBoxLog.objects.create(action="withdraw", amount=amount, comment=comment)
+
+    new_total = Money.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
+    print(f"New total money available after withdrawal: {new_total}")
+
+    return Response({
+        'message': f'{amount} withdrawn successfully',
+        'remaining_balance': new_total
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

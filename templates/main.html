@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Django Project Documentation</title>
     <style>
+        /* Global Styles */
         body {
             font-family: 'Arial', sans-serif;
             line-height: 1.6;
@@ -31,19 +32,26 @@
         }
         .section {
             margin-bottom: 30px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 20px;
         }
         ul {
             list-style-type: none;
             padding: 0;
+            margin: 0;
         }
         li {
             margin-bottom: 10px;
+            font-size: 1.1rem;
+            line-height: 1.6;
         }
     </style>
 </head>
 <body>
-    <div class="section" >
-        <h1>Django Project Documentation</h1>
+    <div class="container">
+        <div class="section">
+            <h1>Django Project Documentation</h1>
+        </div>
 
         <div class="section">
             <h2>URLs</h2>
@@ -82,7 +90,6 @@
                 <li><code>/api/categories/create/</code>: Endpoint for creating a category (<code>createCategory</code>)</li>
                 <li><code>/api/categories/update/&lt;pk&gt;</code>: Endpoint for updating a category (<code>updateCategory</code>)</li>
                 <li><code>/</code>: Home endpoint (<code>home</code>)</li>
-                <!-- Add other URLs as per your urlpatterns -->
             </ul>
         </div>
 
@@ -122,7 +129,6 @@
                 <li><code>createCategory(request)</code>: Creates a new category</li>
                 <li><code>updateCategory(request, pk)</code>: Updates a category</li>
                 <li><code>home(request)</code>: Home view</li>
-                <!-- Add descriptions for other views -->
             </ul>
         </div>
 
@@ -181,7 +187,6 @@
                         <li><code>permissions</code>: ManyToManyField to Permissions</li>
                     </ul>
                 </li>
-                <!-- Add descriptions for other models -->
             </ul>
         </div>
     </div>
