@@ -47,7 +47,7 @@ class ServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Service
-        fields = ['name', 'typeOf', 'price_of_service']
+        fields = ['id', 'name', 'typeOf', 'price_of_service']
 
     def validate_typeOf(self, value):
         if not isinstance(value, Category):
