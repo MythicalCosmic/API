@@ -9,10 +9,7 @@ def check_permissions(required_permissions):
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
-            if not request.user.is_authenticated:
-                logger.debug("User not authenticated")
-                return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
-
+         
             if request.user.is_superuser:
                 logger.debug(f"Superuser {request.user.username} bypassing permission checks.")
                 return view_func(request, *args, **kwargs)
