@@ -3,13 +3,28 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import LoginSerializer, MoneySerializer, OrderSerializer, DoctorSerializer, ServiceSerializer, CustomGroupSerializers, PermissionSerializer, CustomerSerializer, UsersMainSerializer, CategorySerializer, CashBoxLogSerializer
-from .models import Orders, Money, Service, Doctors, Customers, CustomGroup, MainUsers, Category, CashBoxLog
+from .serializers import (
+    LoginSerializer, MoneySerializer, OrderSerializer, DoctorSerializer, ServiceSerializer,
+    PermissionSerializer, CustomerSerializer, UsersMainSerializer, CategorySerializer, CashBoxLogSerializer, GroupSerializer, RoleCreateUpdateSerializer
+)
+from .models import Orders, Money, Service, Doctors, Customers, Category, CashBoxLog
+from django.contrib.auth.models import Group, Permission, User
 from rest_framework import status
-from django.db.models import Sum, F
-from django.contrib.auth.models import Group
-from django.contrib.auth.models import Permission
-from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404
+from datetime import datetime
+import http.client
+import urllib
+import logging
+from .utils import check_permissions
+
+
+logger = logging.getLogger(__name__)
+
+TELEGRAM_BOT_TOKEN = '7128976453:AAErFxgbb5i2LWFzra0hblV9oAyFwZwXPQY'
+CHAT_ID = '5274295129'
+
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -25,8 +40,10 @@ def login_view(request):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             })
-        return Response({'error': 'Invalid credentials'}, status=400)
-    return Response(serializer.errors, status=400)
+        else:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @api_view(['POST'])
@@ -36,13 +53,15 @@ def logout_view(request):
 
 
 @api_view(['GET'])
+@check_permissions(['main.view_orders'])
 def allOrders(request):
     orders = Orders.objects.all()
     serializer = OrderSerializer(orders, many=True)
-    return Response({'orders': serializer.data}, status=200)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
+@check_permissions(['main.view_service'])
 def getAvailableDoctors(request, service_id):
     try:
         service = Service.objects.get(id=service_id)
@@ -55,6 +74,7 @@ def getAvailableDoctors(request, service_id):
 
 
 @api_view(['POST'])
+@check_permissions(['main.add_order'])
 def createOrder(request):
     print("Request Data:", request.data)
     serializer = OrderSerializer(data=request.data)
@@ -68,6 +88,7 @@ def createOrder(request):
 
 
 @api_view(['DELETE'])
+@check_permissions(['main.delete_order'])
 def delete_order(request, pk):
     try:
         order = Orders.objects.get(pk=pk)
@@ -78,6 +99,7 @@ def delete_order(request, pk):
 
 
 @api_view(['PUT'])
+@check_permissions(['main.change_order'])
 def update_order(request, pk):
     try:
         order = Orders.objects.get(pk=pk)
@@ -92,6 +114,7 @@ def update_order(request, pk):
 
 
 @api_view(['GET'])
+@check_permissions(['main.view_service'])
 def getAllServices(request):
     all_data = Service.objects.all()
     serializer = ServiceSerializer(all_data, many=True)
@@ -99,6 +122,7 @@ def getAllServices(request):
 
 
 @api_view(['POST'])
+@check_permissions(['main.add_service'])
 def addService(request):
     serializer = ServiceSerializer(data=request.data)
     if serializer.is_valid():
@@ -108,8 +132,8 @@ def addService(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 @api_view(['DELETE'])
+@check_permissions(['main.delete_service'])
 def deleteService(request, pk):
     try:
         service = Service.objects.get(pk=pk)
@@ -120,6 +144,7 @@ def deleteService(request, pk):
 
 
 @api_view(['PUT'])
+@check_permissions(['main.change_service'])
 def updateService(request, pk):
     try:
         service = Service.objects.get(pk=pk)
@@ -134,6 +159,7 @@ def updateService(request, pk):
 
 
 @api_view(['GET'])
+@check_permissions(['main.view_doctor'])
 def getAllDoctors(request):
     all_data = Doctors.objects.all()
     serializer = DoctorSerializer(all_data, many=True)
@@ -141,6 +167,7 @@ def getAllDoctors(request):
 
 
 @api_view(['POST'])
+@check_permissions(['main.add_doctor'])
 def addDoctor(request):
     serializer = DoctorSerializer(data=request.data)
     if not serializer.is_valid():
@@ -150,6 +177,7 @@ def addDoctor(request):
 
 
 @api_view(['DELETE'])
+@check_permissions(['main.delete_doctor'])
 def deleteDoctor(request, pk):
     try:
         doctor = Doctors.objects.get(pk=pk)
@@ -160,6 +188,7 @@ def deleteDoctor(request, pk):
 
 
 @api_view(['PUT'])
+@check_permissions(['main.change_doctor'])
 def updateDoctor(request, pk):
     try:
         doctor = Doctors.objects.get(pk=pk)
@@ -173,47 +202,52 @@ def updateDoctor(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
 @api_view(['GET'])
+@check_permissions(['main.view_customer'])
 def allCustomers(request):
     customers = Customers.objects.all()
     serialized = CustomerSerializer(customers, many=True)
     return Response(serialized.data, status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
+@check_permissions(['main.add_customer'])
 def createCustomer(request):
     serialized = CustomerSerializer(data=request.data)
     if not serialized.is_valid():
         return Response(serialized.errors, status=status.HTTP_400_BAD_REQUEST)
     serialized.save()
-    return Response({'success': 'Customer created successfully'}, status=status.HTTP_200_OK)
+    return Response({'success': 'Customer created successfully'}, status=status.HTTP_201_CREATED)
 
-@api_view(['GET'])
+
+@api_view(['PUT'])
+@check_permissions(['main.change_customer'])
 def updateCustomer(request, pk):
     try:
-        doctor = Customers.objects.get(pk=pk)
+        customer = Customers.objects.get(pk=pk)
     except Customers.DoesNotExist:
-        return Response({'error': 'Customers not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = CustomerSerializer(doctor, data=request.data)
+    serializer = CustomerSerializer(customer, data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
+
+@api_view(['DELETE'])
+@check_permissions(['main.delete_customer'])
 def deleteCustomer(request, pk):
     try:
         customer = Customers.objects.get(pk=pk)
-    except Doctors.DoesNotExist:
+    except Customers.DoesNotExist:
         return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
     customer.delete()
     return Response({'success': 'Customer deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])
+@check_permissions(['main.view_cashboxlog'])
 def showCashBox(request):
     try:
         cashbox_logs = CashBoxLog.objects.all().order_by('-timestamp')
@@ -223,42 +257,59 @@ def showCashBox(request):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 @api_view(['GET'])
+@check_permissions(['main.view_money'])
 def getTotal(request):
     total_price = Money.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
     return Response({'total_price': total_price}, status=status.HTTP_200_OK)
 
 
-
 @api_view(['POST'])
-def inKassa(request):
-    serializer = MoneySerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response({'error': 'Error occurred! Please try again later!'})
-    else:
-        serializer.save()
-        return Response({'success': 'Money added successfully'}, status=status.HTTP_201_CREATED)
-
-
-@api_view(['POST'])
+@check_permissions(['main.reset_cashbox'])
 def reset_cashbox(request):
+    user = request.user
+    total_price_before = Orders.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
     Money.objects.all().delete()
     Orders.objects.update(price=0)
     CashBoxLog.objects.create(action="reset", amount=0, comment="Cashbox reset")
-    return Response({'message': 'Cashbox reset successfully', 'total_price': 0}, status=status.HTTP_200_OK)
+    total_price_after = Orders.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
+    reset_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    message = (
+        f"💸 Cashbox reset successfully\n"
+        f"👤 Performed by: {user.username}\n"
+        f"🕔 Time: {reset_time}\n"
+        f"💰 Total price before reset: {total_price_before}\n"
+        f"💰 Total price after reset: {total_price_after}"
+    )
+    send_telegram_message(message)
+    return Response({'message': message, 'total_price': total_price_after}, status=status.HTTP_200_OK)
 
+
+def send_telegram_message(message):
+    conn = http.client.HTTPSConnection("api.telegram.org")
+    params = urllib.parse.urlencode({
+        'chat_id': CHAT_ID,
+        'text': message
+    })
+    url = f"/bot{TELEGRAM_BOT_TOKEN}/sendMessage?{params}"
+    conn.request("GET", url)
+    response = conn.getresponse()
+    data = response.read()
+    conn.close()
+    return data
 
 
 @api_view(['POST'])
+@check_permissions(['main.withdraw_money'])
 def withdraw_money(request):
+    user = request.user
     amount = request.data.get('amount')
     comment = request.data.get('comment', '')
 
     if not amount or amount <= 0:
         return Response({'error': 'Invalid amount specified'}, status=status.HTTP_400_BAD_REQUEST)
+
     total_money = Money.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
-    print(f"Total money available before withdrawal: {total_money}")
     if amount > total_money:
         return Response({'error': 'Insufficient funds in cashbox'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -279,7 +330,16 @@ def withdraw_money(request):
     CashBoxLog.objects.create(action="withdraw", amount=amount, comment=comment)
 
     new_total = Money.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
-    print(f"New total money available after withdrawal: {new_total}")
+    withdraw_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    message = (
+        f"💸 Money withdrawn successfully\n"
+        f"👤 Performed by: {user.username}\n"
+        f"🕔 Time: {withdraw_time}\n"
+        f"💰 Amount withdrawn: {amount}\n"
+        f"💰 Remaining balance: {new_total}\n"
+        f"📝 Comment: {comment}"
+    )
+    send_telegram_message(message)
 
     return Response({
         'message': f'{amount} withdrawn successfully',
@@ -288,23 +348,28 @@ def withdraw_money(request):
 
 
 @api_view(['POST'])
+@check_permissions(['main.add_user'])
 def createUser(request):
     try:
         serializer = UsersMainSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        serializer.save()
-        return Response({'success': 'User added successfully'}, status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success': 'User added successfully'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({'error': 'Error occurred while creating User', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 @api_view(['GET'])
+@check_permissions(['main.view_user'])
 def allUsers(request):
-    users = MainUsers.objects.all()
+    users = User.objects.all()
     serialized = UsersMainSerializer(users, many=True)
     return Response(serialized.data, status=status.HTTP_200_OK)
 
-@api_view(['PUT'])
+
+@api_view(['DELETE'])
+@check_permissions(['main.delete_user'])
 def deleteUser(request, pk):
     try:
         user = MainUsers.objects.get(pk=pk)
@@ -313,7 +378,9 @@ def deleteUser(request, pk):
     user.delete()
     return Response({'success': 'User deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
-@api_view(['POST'])
+
+@api_view(['PUT'])
+@check_permissions(['main.change_user'])
 def updateUser(request, pk):
     try:
         user = MainUsers.objects.get(pk=pk)
@@ -326,14 +393,9 @@ def updateUser(request, pk):
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
-def list_permissions(request):
-    permissions = Permission.objects.all()
-    serializer = PermissionSerializer(permissions, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 @api_view(['GET'])
+@check_permissions(['main.view_category'])
 def AllCategory(request):
     categories = Category.objects.all()
     serialized = CategorySerializer(categories, many=True)
@@ -341,6 +403,7 @@ def AllCategory(request):
 
 
 @api_view(['POST'])
+@check_permissions(['main.add_category'])
 def createCategory(request):
     try:
         serializer = CategorySerializer(data=request.data)
@@ -349,11 +412,26 @@ def createCategory(request):
         serializer.save()
         return Response({'success': 'Category added successfully'}, status=status.HTTP_201_CREATED)
     except Exception as e:
-        return Response({'error': 'Error occurred while creating Category', 'details': str(e)},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'error': 'Error occurred while creating Category', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['PUT'])
+@check_permissions(['main.change_category'])
+def updateCategory(request, pk):
+    try:
+        category = Category.objects.get(pk=pk)
+    except Category.DoesNotExist:
+        return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = CategorySerializer(category, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+@check_permissions(['main.delete_category'])
 def deleteCategory(request, pk):
     try:
         categories = Category.objects.get(pk=pk)
@@ -363,16 +441,46 @@ def deleteCategory(request, pk):
     return Response({'success': 'Category deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 
+@api_view(['GET'])
+@check_permissions(['main.view_role'])
+def allRoles(request):
+    groups = Group.objects.all()
+    serializer = GroupSerializer(groups, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['POST'])
-def updateCategory(request, pk):
-    try:
-        user = Category.objects.get(pk=pk)
-    except Category.DoesNotExist:
-        return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = CategorySerializer(user, data=request.data)
+@check_permissions(['auth.add_group'])
+def createRole(request):
+    serializer = RoleCreateUpdateSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
+        role = serializer.save()
+        role.permissions.set(request.data.get('permissions', []))
+        return Response(GroupSerializer(role).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+@check_permissions(['auth.change_group'])
+def editRole(request, pk):
+    role = get_object_or_404(Group, pk=pk)
+    serializer = RoleCreateUpdateSerializer(role, data=request.data)
+    if serializer.is_valid():
+        role = serializer.save()
+        role.permissions.set(request.data.get('permissions', []))
+        return Response(GroupSerializer(role).data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+@check_permissions(['auth.delete_group'])
+def deleteRole(request, pk):
+    role = get_object_or_404(Group, pk=pk)
+    role.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@check_permissions(['auth.view_permission'])
+def listPermissions(request):
+    permissions = Permission.objects.all()
+    serializer = PermissionSerializer(permissions, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)

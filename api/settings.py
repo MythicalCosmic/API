@@ -143,3 +143,4 @@ CORS_ALLOWED_ORIGINS = [
     'http://192.168.100.0:8080/'
 ]
 CSRF_TRUSTED_ORIGINS = ['https://api-pharm.onrender.com']
+

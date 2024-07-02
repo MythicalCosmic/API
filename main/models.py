@@ -1,18 +1,65 @@
 from django.db import models
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
+from django.utils.translation import gettext_lazy as _
+
+# Custom user manager
+class CustomUserManager(BaseUserManager):
+    def create_user(self, username, password=None, **extra_fields):
+        if not username:
+            raise ValueError(_('The Username field must be set'))
+        user = self.model(username=username, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(username, password, **extra_fields)
+
+# Custom user model
+class User(AbstractBaseUser, PermissionsMixin):
+    username = models.CharField(max_length=150, unique=True)
+    full_name = models.CharField(max_length=150)
+    age = models.IntegerField()
+    address = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=15)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    groups = models.ManyToManyField(
+        Group,
+        related_name='user_groups',
+        blank=True,
+        help_text=_('Groups this user belongs to. A user will get all permissions granted to each of their groups.')
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name='user_permissions_set',
+        blank=True,
+        help_text=_('Specific permissions for this user.')
+    )
+
+    objects = CustomUserManager()
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['full_name', 'age', 'address', 'phone_number']
+
+    def __str__(self):
+        return self.username
+
+# Additional models
 class Customers(models.Model):
     full_name = models.CharField(max_length=100)
-    age = models.IntegerField()
+    age = models.IntegerField(null=True, blank=True)
     address = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15)
 
     def __str__(self):
         return self.full_name
 
-
 class Doctors(models.Model):
     full_name = models.CharField(max_length=100)
-    age = models.IntegerField()
+    age = models.IntegerField(null=True, blank=True)
     address = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15)
     specialization = models.CharField(max_length=100)
@@ -21,13 +68,11 @@ class Doctors(models.Model):
     def __str__(self):
         return self.full_name
 
-
 class Category(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
-
 
 class Service(models.Model):
     name = models.CharField(max_length=100)
@@ -37,7 +82,6 @@ class Service(models.Model):
     def __str__(self):
         return self.name
 
-
 class Orders(models.Model):
     customer = models.ForeignKey(Customers, on_delete=models.CASCADE)
     doctor = models.ForeignKey(Doctors, on_delete=models.CASCADE)
@@ -45,8 +89,8 @@ class Orders(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def save(self, *args, **kwargs):
-        if self.price is None and self.service and self.service.price:
-            self.price = self.service.price
+        if self.price is None or self.price == 0:
+            self.price = self.service.price_of_service
 
         super().save(*args, **kwargs)
 
@@ -63,7 +107,6 @@ class Orders(models.Model):
 
     def __str__(self):
         return self.customer.full_name
-#fist time
 
 class Money(models.Model):
     customer = models.ForeignKey(Customers, on_delete=models.CASCADE)
@@ -73,27 +116,6 @@ class Money(models.Model):
 
     def __str__(self):
         return f'{self.customer.full_name} - {self.service.name} - {self.price}'
-
-class CustomGroup(models.Model):
-    name = models.CharField(max_length=150, unique=True)
-    permissions = models.ManyToManyField(
-        Permission,
-        verbose_name=("permissions"),
-    )
-    def __str__(self):
-        return self.name
-
-
-class MainUsers(models.Model):
-    full_name = models.CharField(max_length=150, unique=True)
-    age = models.IntegerField()
-    address = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=15)
-    role = models.ForeignKey(CustomGroup, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.full_name
-
 
 class CashBoxLog(models.Model):
     action = models.CharField(max_length=255)

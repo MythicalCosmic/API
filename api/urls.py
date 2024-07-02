@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from main.views import *
 from docs.views import *
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/login/', login_view, name='login'),
@@ -25,7 +26,6 @@ urlpatterns = [
     path('api/cashbox/withdrawCashbox', withdraw_money, name='withdraw'),
     path('api/create-user', createUser, name='create-user'),
     path('api/users/all', allUsers, name="all-users"),
-    path('api/permission/list', list_permissions, name="list_permissions"),
     path('api/customers/list', allCustomers, name="allCustomers"),
     path('api/customers/create', createCustomer, name="createCustomer"),
     path('api/customers/update/<int:pk>', updateCustomer, name="updateCustomer"),
@@ -36,5 +36,10 @@ urlpatterns = [
     path('api/categories/delete/<int:pk>', deleteCategory, name="deleteCategory"),
     path('api/categories/create/', createCategory, name="createCategory"),
     path('api/categories/update/<int:pk>', updateCategory, name="updateCategory"),
+    path('api/roles/all', allRoles, name="allRoles"),
+    path('api/roles/update/<int:pk>', editRole, name="editRole"),
+    path('api/roles/delete/<int:pk>', deleteRole, name="deleteRole"),
+    path('api/roles/create', createRole, name="createRole"),
+    path('permissions/', listPermissions, name='list-permissions'),
     path('', home, name='home')
 ]
