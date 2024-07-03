@@ -16,7 +16,6 @@ from datetime import datetime
 import http.client
 import urllib
 import logging
-from .utils import check_permissions
 
 
 logger = logging.getLogger(__name__)
@@ -53,7 +52,6 @@ def logout_view(request):
 
 
 @api_view(['GET'])
-@check_permissions(['main.view_orders'])
 def allOrders(request):
     orders = Orders.objects.all()
     serializer = OrderSerializer(orders, many=True)
@@ -61,7 +59,6 @@ def allOrders(request):
 
 
 @api_view(['GET'])
-@check_permissions(['main.view_service'])
 def getAvailableDoctors(request, service_id):
     try:
         service = Service.objects.get(id=service_id)
@@ -74,7 +71,6 @@ def getAvailableDoctors(request, service_id):
 
 
 @api_view(['POST'])
-@check_permissions(['main.add_order'])
 def createOrder(request):
     print("Request Data:", request.data)
     serializer = OrderSerializer(data=request.data)
@@ -88,7 +84,6 @@ def createOrder(request):
 
 
 @api_view(['DELETE'])
-@check_permissions(['main.delete_order'])
 def delete_order(request, pk):
     try:
         order = Orders.objects.get(pk=pk)
@@ -99,7 +94,6 @@ def delete_order(request, pk):
 
 
 @api_view(['PUT'])
-@check_permissions(['main.change_order'])
 def update_order(request, pk):
     try:
         order = Orders.objects.get(pk=pk)
@@ -114,7 +108,6 @@ def update_order(request, pk):
 
 
 @api_view(['GET'])
-@check_permissions(['main.view_service'])
 def getAllServices(request):
     all_data = Service.objects.all()
     serializer = ServiceSerializer(all_data, many=True)
@@ -122,7 +115,6 @@ def getAllServices(request):
 
 
 @api_view(['POST'])
-@check_permissions(['main.add_service'])
 def addService(request):
     serializer = ServiceSerializer(data=request.data)
     if serializer.is_valid():
@@ -133,7 +125,6 @@ def addService(request):
 
 
 @api_view(['DELETE'])
-@check_permissions(['main.delete_service'])
 def deleteService(request, pk):
     try:
         service = Service.objects.get(pk=pk)
@@ -144,7 +135,6 @@ def deleteService(request, pk):
 
 
 @api_view(['PUT'])
-@check_permissions(['main.change_service'])
 def updateService(request, pk):
     try:
         service = Service.objects.get(pk=pk)
@@ -159,7 +149,6 @@ def updateService(request, pk):
 
 
 @api_view(['GET'])
-@check_permissions(['main.view_doctor'])
 def getAllDoctors(request):
     all_data = Doctors.objects.all()
     serializer = DoctorSerializer(all_data, many=True)
@@ -167,7 +156,6 @@ def getAllDoctors(request):
 
 
 @api_view(['POST'])
-@check_permissions(['main.add_doctor'])
 def addDoctor(request):
     serializer = DoctorSerializer(data=request.data)
     if not serializer.is_valid():
@@ -177,7 +165,6 @@ def addDoctor(request):
 
 
 @api_view(['DELETE'])
-@check_permissions(['main.delete_doctor'])
 def deleteDoctor(request, pk):
     try:
         doctor = Doctors.objects.get(pk=pk)
@@ -188,7 +175,6 @@ def deleteDoctor(request, pk):
 
 
 @api_view(['PUT'])
-@check_permissions(['main.change_doctor'])
 def updateDoctor(request, pk):
     try:
         doctor = Doctors.objects.get(pk=pk)
@@ -203,7 +189,6 @@ def updateDoctor(request, pk):
 
 
 @api_view(['GET'])
-@check_permissions(['main.view_customer'])
 def allCustomers(request):
     customers = Customers.objects.all()
     serialized = CustomerSerializer(customers, many=True)
@@ -211,7 +196,6 @@ def allCustomers(request):
 
 
 @api_view(['POST'])
-@check_permissions(['main.add_customer'])
 def createCustomer(request):
     serialized = CustomerSerializer(data=request.data)
     if not serialized.is_valid():
@@ -221,7 +205,6 @@ def createCustomer(request):
 
 
 @api_view(['PUT'])
-@check_permissions(['main.change_customer'])
 def updateCustomer(request, pk):
     try:
         customer = Customers.objects.get(pk=pk)
@@ -236,7 +219,6 @@ def updateCustomer(request, pk):
 
 
 @api_view(['DELETE'])
-@check_permissions(['main.delete_customer'])
 def deleteCustomer(request, pk):
     try:
         customer = Customers.objects.get(pk=pk)
@@ -247,7 +229,6 @@ def deleteCustomer(request, pk):
 
 
 @api_view(['GET'])
-@check_permissions(['main.view_cashboxlog'])
 def showCashBox(request):
     try:
         cashbox_logs = CashBoxLog.objects.all().order_by('-timestamp')
@@ -258,14 +239,12 @@ def showCashBox(request):
 
 
 @api_view(['GET'])
-@check_permissions(['main.view_money'])
 def getTotal(request):
     total_price = Money.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
     return Response({'total_price': total_price}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
-@check_permissions(['main.reset_cashbox'])
 def reset_cashbox(request):
     user = request.user
     total_price_before = Orders.objects.aggregate(total_price=Sum('price'))['total_price'] or 0
@@ -300,7 +279,6 @@ def send_telegram_message(message):
 
 
 @api_view(['POST'])
-@check_permissions(['main.withdraw_money'])
 def withdraw_money(request):
     user = request.user
     amount = request.data.get('amount')
@@ -348,7 +326,6 @@ def withdraw_money(request):
 
 
 @api_view(['POST'])
-@check_permissions(['main.add_user'])
 def createUser(request):
     try:
         serializer = UsersMainSerializer(data=request.data)
@@ -361,7 +338,6 @@ def createUser(request):
 
 
 @api_view(['GET'])
-@check_permissions(['main.view_user'])
 def allUsers(request):
     users = User.objects.all()
     serialized = UsersMainSerializer(users, many=True)
@@ -369,22 +345,20 @@ def allUsers(request):
 
 
 @api_view(['DELETE'])
-@check_permissions(['main.delete_user'])
 def deleteUser(request, pk):
     try:
-        user = MainUsers.objects.get(pk=pk)
-    except MainUsers.DoesNotExist:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
     user.delete()
     return Response({'success': 'User deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['PUT'])
-@check_permissions(['main.change_user'])
 def updateUser(request, pk):
     try:
-        user = MainUsers.objects.get(pk=pk)
-    except MainUsers.DoesNotExist:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = UsersMainSerializer(user, data=request.data)
@@ -395,7 +369,6 @@ def updateUser(request, pk):
 
 
 @api_view(['GET'])
-@check_permissions(['main.view_category'])
 def AllCategory(request):
     categories = Category.objects.all()
     serialized = CategorySerializer(categories, many=True)
@@ -403,7 +376,6 @@ def AllCategory(request):
 
 
 @api_view(['POST'])
-@check_permissions(['main.add_category'])
 def createCategory(request):
     try:
         serializer = CategorySerializer(data=request.data)
@@ -416,7 +388,6 @@ def createCategory(request):
 
 
 @api_view(['PUT'])
-@check_permissions(['main.change_category'])
 def updateCategory(request, pk):
     try:
         category = Category.objects.get(pk=pk)
@@ -431,7 +402,6 @@ def updateCategory(request, pk):
 
 
 @api_view(['DELETE'])
-@check_permissions(['main.delete_category'])
 def deleteCategory(request, pk):
     try:
         categories = Category.objects.get(pk=pk)
@@ -442,7 +412,6 @@ def deleteCategory(request, pk):
 
 
 @api_view(['GET'])
-@check_permissions(['main.view_role'])
 def allRoles(request):
     groups = Group.objects.all()
     serializer = GroupSerializer(groups, many=True)
@@ -450,7 +419,6 @@ def allRoles(request):
 
 
 @api_view(['POST'])
-@check_permissions(['auth.add_group'])
 def createRole(request):
     serializer = RoleCreateUpdateSerializer(data=request.data)
     if serializer.is_valid():
@@ -460,7 +428,6 @@ def createRole(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
-@check_permissions(['auth.change_group'])
 def editRole(request, pk):
     role = get_object_or_404(Group, pk=pk)
     serializer = RoleCreateUpdateSerializer(role, data=request.data)
@@ -471,7 +438,6 @@ def editRole(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
-@check_permissions(['auth.delete_group'])
 def deleteRole(request, pk):
     role = get_object_or_404(Group, pk=pk)
     role.delete()
@@ -479,7 +445,6 @@ def deleteRole(request, pk):
 
 
 @api_view(['GET'])
-@check_permissions(['auth.view_permission'])
 def listPermissions(request):
     permissions = Permission.objects.all()
     serializer = PermissionSerializer(permissions, many=True)
