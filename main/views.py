@@ -1,14 +1,14 @@
 from django.contrib.auth import authenticate, logout
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
     LoginSerializer, MoneySerializer, OrderSerializer, DoctorSerializer, ServiceSerializer,
     PermissionSerializer, CustomerSerializer, UsersMainSerializer, CategorySerializer, CashBoxLogSerializer, GroupSerializer, RoleCreateUpdateSerializer
 )
-from .models import Orders, Money, Service, Doctors, Customers, Category, CashBoxLog
-from django.contrib.auth.models import Group, Permission, User
+from .models import Orders, Money, Service, Doctors, Customers, Category, CashBoxLog, User
+from django.contrib.auth.models import Group, Permission
 from rest_framework import status
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404
@@ -16,6 +16,7 @@ from datetime import datetime
 import http.client
 import urllib
 import logging
+from .utils import IsInGroup
 
 
 logger = logging.getLogger(__name__)
@@ -52,13 +53,16 @@ def logout_view(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsInGroup])
 def allOrders(request):
+    request.required_group = 'Kassir'
     orders = Orders.objects.all()
     serializer = OrderSerializer(orders, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsInGroup])
 def getAvailableDoctors(request, service_id):
     try:
         service = Service.objects.get(id=service_id)

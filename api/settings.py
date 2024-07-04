@@ -144,3 +144,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CSRF_TRUSTED_ORIGINS = ['https://api-pharm.onrender.com']
 
+
+
+AUTH_USER_MODEL = 'main.User'
+

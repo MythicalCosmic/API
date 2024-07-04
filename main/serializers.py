@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User, Group, Permission
-from .models import Doctors, Orders, Service, Money, Customers, Category, CashBoxLog
+from django.contrib.auth.models import Group, Permission
+from .models import Doctors, Orders, Service, Money, Customers, Category, CashBoxLog, User
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -9,7 +9,7 @@ class LoginSerializer(serializers.Serializer):
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctors
-        fields = ['id', 'full_name', 'specialization']
+        fields = '__all__'
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -59,46 +59,37 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'permissions']
 
 class UsersMainSerializer(serializers.ModelSerializer):
+    groups = GroupSerializer(many=True, read_only=True)
+    role = serializers.SerializerMethodField()
     group = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), source='groups', write_only=True)
-    role = serializers.StringRelatedField(source='groups.first', many=False)
-    age = serializers.IntegerField(source='profile.age', required=False)
-    address = serializers.CharField(source='profile.address', required=False)
-    phone_number = serializers.CharField(source='profile.phone_number', required=False)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'age', 'address', 'phone_number', 'group', 'role', 'password']
+        fields = ['id', 'username', 'full_name', 'age', 'address', 'phone_number', 'groups', 'role', 'group', 'password']
         extra_kwargs = {'password': {'write_only': True}}
 
+    def get_role(self, obj):
+        if obj.groups.exists():
+            return obj.groups.first().name
+        return None
+
     def create(self, validated_data):
-        profile_data = validated_data.pop('profile', {})
-        group = validated_data.pop('groups')
+        groups_data = validated_data.pop('groups', [])
         password = validated_data.pop('password', None)
         user = User.objects.create(**validated_data)
-        user.groups.set([group])
+        user.groups.set(groups_data)
         if password:
             user.set_password(password)
         user.save()
-        Profile.objects.create(user=user, **profile_data)  # Ensure Profile model is imported
         return user
 
     def update(self, instance, validated_data):
-        profile_data = validated_data.pop('profile', {})
-        group = validated_data.pop('groups', None)
-        instance = super(UsersMainSerializer, self).update(instance, validated_data)
-        if group:
-            instance.groups.set([group])
+        groups_data = validated_data.pop('groups', [])
+        instance = super().update(instance, validated_data)
+        instance.groups.set(groups_data)
         if 'password' in validated_data:
             instance.set_password(validated_data['password'])
         instance.save()
-
-        # Update profile fields
-        profile = instance.profile  # Ensure Profile model is imported
-        profile.age = profile_data.get('age', profile.age)
-        profile.address = profile_data.get('address', profile.address)
-        profile.phone_number = profile_data.get('phone_number', profile.phone_number)
-        profile.save()
-
         return instance
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -112,9 +103,7 @@ class CashBoxLogSerializer(serializers.ModelSerializer):
         fields = ['action', 'amount', 'timestamp', 'comment']
 
 class RoleCreateUpdateSerializer(serializers.ModelSerializer):
-    permissions = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Permission.objects.all()
-    )
+    permissions = serializers.PrimaryKeyRelatedField(many=True, queryset=Permission.objects.all())
 
     class Meta:
         model = Group
