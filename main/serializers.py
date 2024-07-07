@@ -61,7 +61,7 @@ class GroupSerializer(serializers.ModelSerializer):
 class UsersMainSerializer(serializers.ModelSerializer):
     groups = GroupSerializer(many=True, read_only=True)
     role = serializers.SerializerMethodField()
-    group = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), source='groups', write_only=True)
+    group = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), write_only=True)
 
     class Meta:
         model = User
@@ -74,23 +74,25 @@ class UsersMainSerializer(serializers.ModelSerializer):
         return None
 
     def create(self, validated_data):
-        groups_data = validated_data.pop('groups', [])
+        group = validated_data.pop('group')
         password = validated_data.pop('password', None)
         user = User.objects.create(**validated_data)
-        user.groups.set(groups_data)
+        user.groups.add(group)
         if password:
             user.set_password(password)
         user.save()
         return user
 
     def update(self, instance, validated_data):
-        groups_data = validated_data.pop('groups', [])
+        group = validated_data.pop('group', None)
         instance = super().update(instance, validated_data)
-        instance.groups.set(groups_data)
+        if group:
+            instance.groups.set([group])
         if 'password' in validated_data:
             instance.set_password(validated_data['password'])
         instance.save()
         return instance
+
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
