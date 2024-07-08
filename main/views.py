@@ -53,7 +53,6 @@ def logout_view(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated, IsInGroup])
 def allOrders(request):
     request.required_group = 'Kassir'
     orders = Orders.objects.all()
@@ -62,7 +61,6 @@ def allOrders(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated, IsInGroup])
 def getAvailableDoctors(request, service_id):
     try:
         service = Service.objects.get(id=service_id)
