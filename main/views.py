@@ -22,7 +22,7 @@ from .utils import IsInGroup
 logger = logging.getLogger(__name__)
 
 TELEGRAM_BOT_TOKEN = '7128976453:AAErFxgbb5i2LWFzra0hblV9oAyFwZwXPQY'
-CHAT_ID = ['5274295129', '7127361294']
+CHAT_ID = '7127361294'
 
 
 
